@@ -12,16 +12,27 @@ public class InventoryPage {
     private final SelenideElement pageTitle = $(".title");
     private final ElementsCollection inventoryItems = $$(".inventory_item");
     private final SelenideElement cartLink = $(".shopping_cart_link");
+    private final SelenideElement cartBadge = $(".shopping_cart_badge"); // El numerito rojo
 
-    // Elementos nuevos para el Sort (Ordenamiento)
+    // Filtros
     private final SelenideElement sortDropdown = $(".product_sort_container");
     private final ElementsCollection itemPrices = $$(".inventory_item_price");
+
+    // Menú Lateral (Logout)
+    private final SelenideElement burgerMenuBtn = $("#react-burger-menu-btn");
+    private final SelenideElement logoutLink = $("#logout_sidebar_link");
 
     public void checkTitleIsVisible() {
         pageTitle.shouldBe(visible).shouldHave(text("Products"));
     }
 
     public void addToCart(String productName) {
+        // Busca el botón dentro del item específico
+        inventoryItems.find(text(productName)).$(".btn_inventory").click();
+    }
+
+    public void removeFromCart(String productName) {
+        // El botón cambia de nombre, pero la lógica es clic en el mismo lugar
         inventoryItems.find(text(productName)).$(".btn_inventory").click();
     }
 
@@ -29,21 +40,29 @@ public class InventoryPage {
         cartLink.click();
     }
 
-    // NUEVO: Selecciona una opción del filtro (ej: "lohi" para low to high)
+    // NUEVO: Valida cuántos items dice el carrito que tiene
+    public void checkCartBadge(String count) {
+        cartBadge.shouldHave(text(count));
+    }
+
+    // NUEVO: Valida que el carrito esté vacío (sin numerito rojo)
+    public void checkCartBadgeHidden() {
+        cartBadge.shouldNotBe(visible);
+    }
+
     public void selectSortOption(String value) {
         sortDropdown.selectOptionByValue(value);
     }
 
-// ... imports ...
-
-    // REEMPLAZA ESTE MÉTODO COMPLETO
     public List<Double> getItemPrices() {
-        // 1. Obtenemos la lista de Textos (List<String>) directamente de Selenide
         return itemPrices.texts().stream()
-                // 2. Procesamos esa lista de textos estándar
-                .map(text -> text.replace("$", "")) // Quita el signo $
-                .map(Double::parseDouble)           // Convierte texto a número
+                .map(text -> text.replace("$", ""))
+                .map(Double::parseDouble)
                 .collect(Collectors.toList());
     }
 
+    // NUEVO: Lógica de Logout
+    public void logout() {
+        burgerMenuBtn.click();
+        logoutLink.shouldBe(interactable).click();    }
 }
