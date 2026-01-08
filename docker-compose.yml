@@ -1,0 +1,26 @@
+services:
+  # SERVICIO 1: El Navegador (Chrome)
+  # Usamos la imagen oficial de Selenium. ¡Ya trae Chrome y ChromeDriver instalados!
+  selenium-chrome:
+    image: selenium/standalone-chrome:latest
+    container_name: browser-container
+    ports:
+      - "4444:4444" # Puerto para recibir órdenes
+      - "7900:7900" # Puerto para VER el navegador por web (NoVNC)
+    shm_size: '2gb' # Memoria compartida necesaria para que Chrome no crashee
+
+  # SERVICIO 2: Tus Tests (Java/Maven)
+  ui-tests:
+    build: .
+    container_name: test-runner
+    depends_on:
+      - selenium-chrome # Espera a que el navegador arranque
+    environment:
+      # Le decimos a Selenide: "No abras Chrome local, úsalo en esta URL"
+      - SELENIDE_REMOTE=http://selenium-chrome:4444/wd/hub
+      - SELENIDE_BROWSER=chrome
+    volumes:
+      # Sacamos el reporte a tu Windows
+      - ./target/site/allure-maven-plugin:/app/target/site/allure-maven-plugin
+    # Comando de ejecución pasando la configuración remota
+    command: mvn test -Dselenide.remote=http://selenium-chrome:4444/wd/hub -Dallure.results.directory=target/allure-results allure:report
